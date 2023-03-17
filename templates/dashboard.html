@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% comment %} {% block content %}
+  <h1>Dashboard</h1>
+  {% if companies.count > 1 %}
+    <ul>
+      {% for company in companies %}
+        <li><a href="{% url 'company_dashboard' company.id %}">{{ company.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% elif devices %}
+    <table>
+      <thead>
+        <tr>
+          <th>Device Name</th>
+          <th>Latest Data</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for device, data in devices %}
+          <tr>
+            <td>{{ device.name }}</td>
+            <td>{{ data.data }}</td>
+            <td><a href="{% url 'device_data' device.id %}">View Data</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No devices found</p>
+  {% endif %}
+{% endblock %} {% endcomment %}
+
+
+
+
+{% block content %}
+  <h1>Dashboard</h1>
+  {% if companies %}
+    <h2>Your Companies</h2>
+    <ul>
+      {% for company in companies %}
+        <li><a href="{% url 'company_detail' pk=company.pk %}">{{ company.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You don't have any companies yet.</p>
+  {% endif %}
+
+  {% if latest_data %}
+    <h2>Latest Data</h2>
+    <ul>
+      {% for data in latest_data %}
+        <li>{{ data.timestamp }} - {{ data.value }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,19 @@
+<!-- templates/blog.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <div id="content">
+        {% for post in post_list %}
+            <div class="post-entry">
+                <h2><a href="{% url 'post_detail' post.slug %}">{{ post.title }}</a></h2>
+                <p class="date">Published {{ post.publish }} by {{ post.author }}</p>
+                <p>{{ post.body|truncatewords:30|linebreaks }}</p>
+            </div>
+        {% endfor %}
+        {% include "pagination.html" with page=posts %}
+    </div>
+    <div id="sidebar">
+        <h2>My blog</h2>
+        <p>This is my blog.</p>
+    </div>
+{% endblock content %}

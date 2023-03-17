@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>{{ device.name }}</h1>
+  {% if milldata %}
+    <h2>Milldata</h2>
+    <ul>
+      {% for data in milldata %}
+        <li>{{ data.timestamp }} - {{ data.value }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>This device doesn't have any milldata yet.</p>
+  {% endif %}
+{% endblock %}
