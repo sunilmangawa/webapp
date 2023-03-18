@@ -23,6 +23,7 @@ urlpatterns = [
     # path('devices/', DeviceListAPIView.as_view(), name='device_list'),
     # path('devices/<int:pk>/', DeviceDetailAPIView.as_view(), name='device_detail'),
     # path('devices/<int:device_id>/data_range/', DeviceDataRangeAPIView.as_view(), name='device_data_range'),
+    # path('devices/<int:device_id>/', MilldataListCreateAPIView.as_view(), name='milldata-list-create'),
 
     path('devices/<int:device_id>/timestamps/', MilldataListCreateAPIView.as_view(), name='milldata-list-create'),
 ]
