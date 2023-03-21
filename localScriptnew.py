@@ -19,7 +19,7 @@ password = 'Test4work'
 
 # Define the MillData object to be sent to the API:
 milldata = {
-    'katta_time': '2022-03-18 12:56:00',
+    'katta_time': '2022-03-20 04:21:00',
     'katta_weight': 100.0,
     'circle': 18,
     'feed_time': 9,

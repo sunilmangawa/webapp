@@ -1,7 +1,7 @@
 from django.urls import path, include
 # from django.contrib.auth import views as auth_views
-from .views import home_page_view, device_data, CompanyDashboardView, MilldataListCreateAPIView, DashboardView, CompanyDetailView, DeviceDetailView#,  login_view, signup, profile, CompanyListCreateAPIView, DeviceListCreateAPIView, CompanyListAPIView, DeviceListAPIView, DeviceDetailAPIView,  DeviceDataRangeAPIView
-# from . import views
+from .views import home_page_view, device_data, CompanyDashboardView, EditFeedingView, MilldataListCreateAPIView, DashboardView, CompanyDetailView, DeviceDetailView  #,  login_view, signup, profile, CompanyListCreateAPIView, DeviceListCreateAPIView, CompanyListAPIView, DeviceListAPIView, DeviceDetailAPIView,  DeviceDataRangeAPIView
+from . import views
 
 urlpatterns = [
     # path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
@@ -13,6 +13,9 @@ urlpatterns = [
     path('dashboard/<int:pk>/', DashboardView.as_view(), name='dashboard'),
     path('company/<int:pk>/', CompanyDetailView.as_view(), name='company_detail'),
     path('device/<int:company_id>/<int:pk>/', DeviceDetailView.as_view(), name='device_detail'),
+    path('device/<int:pk>/edit_feeding/', EditFeedingView.as_view(), name='edit_feeding'),
+    path('export_pdf/<int:device_id>/', views.export_pdf, name='export_pdf'),
+    path('export_excel/<int:device_id>/', views.export_excel, name='export_excel'),
     # path('companies/<int:company_pk>/', CompanyDashboardView.as_view(), name='company_dashboard'),
     path('device/<int:device_id>/data/', device_data, name='device_data'),
     # path('companies/<int:company_id>/devices/<int:device_id>/', device_data, name='device_data'),

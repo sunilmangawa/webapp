@@ -1,5 +1,77 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
+{% block content %}
+  <h1>{{ object.name }}</h1>
+  <p>Total Bags Today: {{ total_bags }}</p>
+  <p>Average Time Today: {{ average_time|floatformat:2 }} seconds</p>
+  <p>Average Current: {{ average_katta|floatformat:2 }} </p>
+  <p>Predited Bags Today: {{ expectedBagToday|floatformat:2 }} seconds</p>
+
+  <!-- Show device details and a button to edit feeding parameters -->
+  <h2>Device Details</h2>
+  <ul>
+    <li>Status: {% if object.is_active %}Active{% else %}Inactive{% endif %}</li>
+    <li>Circle: {{ object.circle }}</li>
+    <li>Feed Time: {{ object.feed_time }}</li>
+    <li>Circle Hold: {{ object.circle_hold }}</li>
+    <li>Actual Hold: {{ object.actual_hold }}</li>
+  </ul>
+  <button onclick="location.href='{% url 'edit_feeding' object.pk %}'">Edit Feeding</button>
+  <button onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
+  <button onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
+  <!-- Date range picker form and export options -->
+  <h2>Custom Date Range</h2>
+  <form method="GET" action="">
+    <label for="start_date">Start Date:</label>
+    <input type="date" name="start_date" id="start_date" value="{{ start_date }}">
+    <label for="end_date">End Date:</label>
+    <input type="date" name="end_date" id="end_date" value="{{ end_date }}">
+    <button type="submit">Filter</button>
+  </form>
+  <button onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
+  <button onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
+
+  <!-- Display Milldata for the selected date range -->
+  <h2>Milldata</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Katta Time</th>
+        <th>Katta Weight</th>
+        <th>Circle</th>
+        <th>Feed Time</th>
+        <th>Circle Hold</th>
+        <th>Actual Hold</th>
+        <th>Feed Status</th>
+        <th>Overload Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for milldata in milldata_list %}
+        <tr>
+          <td>{{ milldata.katta_time }}</td>
+          <td>{{ milldata.katta_weight }}</td>
+          <td>{{ milldata.circle }}</td>
+          <td>{{ milldata.feed_time }}</td>
+          <td>{{ milldata.circle_hold }}</td>
+          <td>{{ milldata.actual_hold }}</td>
+          <td>{{ milldata.feed_status }}</td>
+          <td>{{ milldata.overload_status }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}
+
+
+
+
+
+{% comment %} {% extends 'base.html' %}
+
 {% block content %}
   <h1>{{ device.name }}</h1>
   {% if milldata %}
@@ -12,4 +84,4 @@
   {% else %}
     <p>This device doesn't have any milldata yet.</p>
   {% endif %}
-{% endblock %}
+{% endblock %} {% endcomment %}
