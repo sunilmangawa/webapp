@@ -19,6 +19,11 @@ from django.views.generic import UpdateView
 from .models import Company, Device, Milldata
 from .serializers import CompanySerializer, DeviceSerializer, MilldataSerializer
 from .forms import CustomUserCreationForm, EditFeedingForm
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+from openpyxl import Workbook
+from io import BytesIO
+import datetime
 
 def home_page_view(request):
     return render(request, 'home.html')
@@ -270,11 +275,50 @@ class DeviceDetailView(generic.DetailView):
         return context
 
 def export_pdf(request, device_id):
-    # Implement your PDF exporting logic here
-    return HttpResponse("PDF exporting not yet implemented")
+    device = Device.objects.get(pk=device_id)
+
+    # Get the custom date range
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Convert date strings to datetime objects
+    if start_date:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if end_date:
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    # Filter Milldata based on the custom date range
+    if start_date and end_date:
+        milldata_list = Milldata.objects.filter(device=device, katta_time__date__range=(start_date, end_date))
+    else:
+        milldata_list = Milldata.objects.filter(device=device)
+
+    # Create the PDF file
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer)
+    
+    # ... (Add your PDF exporting logic here)
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='milldata.pdf')
 
 def export_excel(request, device_id):
-    # Implement your Excel exporting logic here
+    # device = Device.objects.get(pk=device_id)
+
+    # # Get the custom date range
+    # start_date = request.GET.get('start_date')
+    # end_date = request.GET.get('end_date')
+
+    # # Convert date strings to datetime objects
+    # if start_date:
+    #     start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+    # if end_date:
+    #     end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    # # Filter Milldata based on the custom date range
+    # if    
     return HttpResponse("Excel exporting not yet implemented")
 
 
