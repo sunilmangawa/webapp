@@ -135,4 +135,12 @@ LOGOUT_REDIRECT_URL = "home" # new
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5" # new
 CRISPY_TEMPLATE_PACK = "bootstrap5" # new
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # new
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # new
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # e.g., 'smtp.gmail.com' for Gmail
+EMAIL_PORT = 587  # e.g., 587 for Gmail
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ballmillautomation@gmail.com'  # e.g., 'you@example.com'
+EMAIL_HOST_PASSWORD = 'Test4work'
+DEFAULT_FROM_EMAIL = 'ballmillautomation@gmail.com'  # e.g., 'you@example.com'
+
