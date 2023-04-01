@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False #env.bool("ANYTHING")
+DEBUG = False #crenv.bool("ANYTHING")
 
 
 ALLOWED_HOSTS = ["194.31.53.193","ballmilautomation.com", "www.ballmilautomation.com", "127.0.0.1","localhost"]
