@@ -1,6 +1,6 @@
 from django.urls import path, include
 # from django.contrib.auth import views as auth_views
-from .views import home_page_view, device_data, CompanyDashboardView, EditFeedingView, MilldataListCreateAPIView, DashboardView, CompanyDetailView, DeviceDetailView  #,  login_view, signup, profile, CompanyListCreateAPIView, DeviceListCreateAPIView, CompanyListAPIView, DeviceListAPIView, DeviceDetailAPIView,  DeviceDataRangeAPIView
+from .views import home_page_view, device_data, CompanyDashboardView, EditFeedingView, MilldataListCreateAPIView, DashboardView, CompanyDetailView, DeviceDetailView, DeviceDataAPI  #,  login_view, signup, profile, CompanyListCreateAPIView, DeviceListCreateAPIView, CompanyListAPIView, DeviceListAPIView, DeviceDetailAPIView,  DeviceDataRangeAPIView
 from . import views
 
 urlpatterns = [
@@ -26,7 +26,6 @@ urlpatterns = [
     # path('devices/', DeviceListAPIView.as_view(), name='device_list'),
     # path('devices/<int:pk>/', DeviceDetailAPIView.as_view(), name='device_detail'),
     # path('devices/<int:device_id>/data_range/', DeviceDataRangeAPIView.as_view(), name='device_data_range'),
-    # path('devices/<int:device_id>/', MilldataListCreateAPIView.as_view(), name='milldata-list-create'),
-
+    path('device/<int:device_id>/', DeviceDataAPI.as_view(), name='device-data-api'),
     path('devices/<int:device_id>/timestamps/', MilldataListCreateAPIView.as_view(), name='milldata-list-create'),
 ]

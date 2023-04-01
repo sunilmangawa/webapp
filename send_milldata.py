@@ -42,7 +42,7 @@ def main():
         overload_status = False  # Replace this with the actual value
         response = send_milldata(katta_time, katta_weight, circle, feed_time, circle_hold, actual_hold, feed_status, overload_status)
         print(f"Sent data to device 1: {response.status_code}")
-        time.sleep(10)
+        time.sleep(96)
 
 if __name__ == "__main__":
     main()
