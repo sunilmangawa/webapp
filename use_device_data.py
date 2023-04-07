@@ -11,6 +11,8 @@ import mysql.connector
 import requests
 import json
 from fetch_device_data import get_device_data
+from send_milldata import send_milldata
+
 # import numpy as np
 # from tfMiniPlus import read_data
 #ser = serial.Serial("/dev/ttyS0", 115200)
@@ -19,14 +21,14 @@ from fetch_device_data import get_device_data
 DEVICE_ID = "1"
 
 #Database Configuration
-# mydb = mysql.connector.connect(
-#   host="localhost",
-#   user="coder",
-#   password="w24",
-#   database="avinashi"
-# )
-# curA = mydb.cursor(dictionary=True)#buffered=True
-# sql = "INSERT INTO production(katta, filltime, datetime, avrage) VALUES(%s, %s, %s, %s)"
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="coder",
+  password="w24",
+  database="avinashi"
+)
+curA = mydb.cursor(dictionary=True)#buffered=True
+sql = "INSERT INTO production(katta, filltime, datetime, average) VALUES(%s, %s, %s, %s)"
 
 # GPIO Basic setting 
 GPIO.setmode(GPIO.BCM) # use GPIO numbering
@@ -34,7 +36,7 @@ GPIO.setwarnings(False)
 
 #---------------------------------------- GPIO INPUT PINS ----------------------------------------------
 # PIN Setting for Katta Button
-button = 27
+button = 5
 GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(button,GPIO.IN) # Is this line Required ? Check while testing
 
@@ -44,16 +46,16 @@ GPIO.setup(button,GPIO.IN) # Is this line Required ? Check while testing
 # GPIO.setup(overload,GPIO.IN)
 
 # Galla Vibrator PIN Setting
-galla_Vibrator_ON = 6
-galla_Vibrator_OFF = 13
+galla_Vibrator_ON = 26
+galla_Vibrator_OFF = 19
 GPIO.setup(galla_Vibrator_ON,GPIO.OUT)# Hopper Vibrator Pin ON
 GPIO.output(galla_Vibrator_ON,GPIO.HIGH)
 GPIO.setup(galla_Vibrator_OFF,GPIO.OUT)# Hopper Vibrator Pin OFF
 GPIO.output(galla_Vibrator_OFF,GPIO.HIGH)
 
 # Hopper Vibrator PIN Setting
-hopper_Vibrator_ON = 26
-hopper_Vibrator_OFF = 19
+hopper_Vibrator_ON = 6
+hopper_Vibrator_OFF = 13
 GPIO.setup(hopper_Vibrator_ON,GPIO.OUT)# Hopper Vibrator Pin ON
 GPIO.output(hopper_Vibrator_ON,GPIO.HIGH)
 GPIO.setup(hopper_Vibrator_OFF,GPIO.OUT)# Hopper Vibrator Pin OFF
@@ -61,108 +63,108 @@ GPIO.output(hopper_Vibrator_OFF,GPIO.HIGH)
 
 
 #--------------------------------------- Code to Get Counted Bag Number ---------------------------------------
-# counted_bag = 0   
+counted_bag = 0   
 
-# def is_time_between(begin_time, end_time, check_time=None):
-#     # If check time is not given, default to current UTC time
-#     check_time = check_time or datetime.utcnow().time()
-#     if begin_time < end_time:
-#         return check_time >= begin_time and check_time <= end_time
-#     else: # crosses midnight
-#         return check_time >= begin_time or check_time <= end_time
-
-
+def is_time_between(begin_time, end_time, check_time=None):
+    # If check time is not given, default to current UTC time
+    check_time = check_time or datetime.utcnow().time()
+    if begin_time < end_time:
+        return check_time >= begin_time and check_time <= end_time
+    else: # crosses midnight
+        return check_time >= begin_time or check_time <= end_time
 
 
-# # Code
-# dt_in_db = '''SELECT datetime FROM production ORDER BY id DESC LIMIT 1'''
-# curA.execute(dt_in_db)
-# result = curA.fetchall()
-# for lstitem in result:
-#     for i in lstitem.items():
-#         rcvDate = (i[1]).date()
-#         print(f"Received Date from DB: {rcvDate} \n")
+
+
+# Code
+dt_in_db = '''SELECT datetime FROM production ORDER BY id DESC LIMIT 1'''
+curA.execute(dt_in_db)
+result = curA.fetchall()
+for lstitem in result:
+    for i in lstitem.items():
+        rcvDate = (i[1]).date()
+        print(f"Received Date from DB: {rcvDate} \n")
         
-#         rcvTime = (i[1]).time()
-#         print(f"Received Time from DB: {rcvTime}\n")
+        rcvTime = (i[1]).time()
+        print(f"Received Time from DB: {rcvTime}\n")
         
 
-#         Current_Date = datetime.today().date()
-#         Previous_Date = (datetime.today() - timedelta(days=1)).date()
-#         Before_Previous_Date = (datetime.today() - timedelta(days=2)).date()
-#         NextDay_Date = (datetime.today() + timedelta(days=1)).date()
-#         print(f"Current_Date is : {Current_Date} \n")
-#         #print(f"Previous_Date is : {Previous_Date} \n")
-#         #print(f"NextDay_Date is : {NextDay_Date} \n")
+        Current_Date = datetime.today().date()
+        Previous_Date = (datetime.today() - timedelta(days=1)).date()
+        Before_Previous_Date = (datetime.today() - timedelta(days=2)).date()
+        NextDay_Date = (datetime.today() + timedelta(days=1)).date()
+        print(f"Current_Date is : {Current_Date} \n")
+        #print(f"Previous_Date is : {Previous_Date} \n")
+        #print(f"NextDay_Date is : {NextDay_Date} \n")
         
-#         # Check Last DB timestamp Date entry with current/today's Date
-#         if rcvDate == Current_Date:
-#             thisDay, pastDay, beforePastDay = True, False, False
-#             print("Last DB entry Date is Today's Date")
-#         elif rcvDate == Previous_Date:
-#             thisDay, pastDay, beforePastDay = False, True, False
-#             print("Last DB entry Date is Yesterday's Date")
-#         else:
-#             if rcvDate < Previous_Date or rcvDate == Before_Previous_Date:
-#                 thisDay, pastDay, beforePastDay = False, False, True
-#                 print("Last DB entry Date is Before Yesterday")
+        # Check Last DB timestamp Date entry with current/today's Date
+        if rcvDate == Current_Date:
+            thisDay, pastDay, beforePastDay = True, False, False
+            print("Last DB entry Date is Today's Date")
+        elif rcvDate == Previous_Date:
+            thisDay, pastDay, beforePastDay = False, True, False
+            print("Last DB entry Date is Yesterday's Date")
+        else:
+            if rcvDate < Previous_Date or rcvDate == Before_Previous_Date:
+                thisDay, pastDay, beforePastDay = False, False, True
+                print("Last DB entry Date is Before Yesterday")
 
-# # Check Last DB timestamp TIME (SHIFT) entry with current/today's SHIFT TIME
-# morningShiftDB = is_time_between(time(7,00), time(19,00), rcvTime)
-# if morningShiftDB == True:
-#     print(f"Morning Shift (DB) = {morningShiftDB}")
-# # Test case when range crosses midnight
-# eveningShiftDB = is_time_between(time(19,00), time(7,00), rcvTime)
-# if eveningShiftDB == True:
-#     print(f"Evening Shift (DB) = {eveningShiftDB}")
-
-
-# # Check Today's Current SHIFT TIME 
-# morningShift_Today = is_time_between(time(7,00), time(19,00), datetime.now().time())
-# if morningShift_Today == True:
-#     print("Currently Shift is Morning Shift.")
-# # Test case when range crosses midnight
-# eveningShift_Today = is_time_between(time(19,00), time(7,00), datetime.now().time())
-# if eveningShift_Today == True:
-#     print("Currently Shift is Evening Shift.")
+# Check Last DB timestamp TIME (SHIFT) entry with current/today's SHIFT TIME
+morningShiftDB = is_time_between(time(7,00), time(19,00), rcvTime)
+if morningShiftDB == True:
+    print(f"Morning Shift (DB) = {morningShiftDB}")
+# Test case when range crosses midnight
+eveningShiftDB = is_time_between(time(19,00), time(7,00), rcvTime)
+if eveningShiftDB == True:
+    print(f"Evening Shift (DB) = {eveningShiftDB}")
 
 
+# Check Today's Current SHIFT TIME 
+morningShift_Today = is_time_between(time(7,00), time(19,00), datetime.now().time())
+if morningShift_Today == True:
+    print("Currently Shift is Morning Shift.")
+# Test case when range crosses midnight
+eveningShift_Today = is_time_between(time(19,00), time(7,00), datetime.now().time())
+if eveningShift_Today == True:
+    print("Currently Shift is Evening Shift.")
 
-# if (morningShiftDB or eveningShiftDB)==True:
-#     bag = '''SELECT katta FROM production ORDER BY id DESC LIMIT 1'''
-#     # bag = '''SELECT MAX(katta) FROM kattaTable'''
-#     curA.execute(bag)
-#     bagDB = curA.fetchall()
-#     #print(bagDB)
-#     for dictkatta in bagDB:
-#         for knum in dictkatta.values():
-#             #print(knum)
-#             counted_bag_DB = knum
+
+
+if (morningShiftDB or eveningShiftDB)==True:
+    bag = '''SELECT katta FROM production ORDER BY id DESC LIMIT 1'''
+    # bag = '''SELECT MAX(katta) FROM kattaTable'''
+    curA.execute(bag)
+    bagDB = curA.fetchall()
+    #print(bagDB)
+    for dictkatta in bagDB:
+        for knum in dictkatta.values():
+            #print(knum)
+            counted_bag_DB = knum
             
-# if thisDay == True:
-#     if morningShiftDB == True:
-#         if morningShift_Today == True:
-#             counted_bag = counted_bag_DB 
-#         if eveningShift_Today == True:
-#             counted_bag = 0          
-#     if eveningShiftDB == True:
-#         if eveningShift_Today == True:
-#             counted_bag = counted_bag_DB        
+if thisDay == True:
+    if morningShiftDB == True:
+        if morningShift_Today == True:
+            counted_bag = counted_bag_DB 
+        if eveningShift_Today == True:
+            counted_bag = 0          
+    if eveningShiftDB == True:
+        if eveningShift_Today == True:
+            counted_bag = counted_bag_DB        
 
-# if pastDay == True:
-#     if morningShiftDB == True:
-#         counted_bag = 0
-#     if eveningShiftDB == True:
-#         if eveningShift_Today == True:
-#             counted_bag = counted_bag_DB
-#         if morningShift_Today == True:
-#             counted_bag = 0
+if pastDay == True:
+    if morningShiftDB == True:
+        counted_bag = 0
+    if eveningShiftDB == True:
+        if eveningShift_Today == True:
+            counted_bag = counted_bag_DB
+        if morningShift_Today == True:
+            counted_bag = 0
 
-# if beforePastDay == True:
-#     counted_bag = 0
+if beforePastDay == True:
+    counted_bag = 0
 
-# print(f"Counted Bag Database= {counted_bag_DB} \n")
-# print(f"Counted Bag = {counted_bag}")
+print(f"Counted Bag Database= {counted_bag_DB} \n")
+print(f"Counted Bag = {counted_bag}")
 
 # For Display
 list_5K = []
@@ -307,19 +309,40 @@ def katta_counter():
                             if newCount==1:
                                 l5, l10, l15, l20 = average, average, average, average
                                 # print(f" Katta No. {counted_bag} Filling_Time {fillTime} DateTime {kattadbtime} Average = {average}")
-                            print(f" Am3 {counted_bag} F_T {fillTime} Time {kattadbtime.strftime('%H:%M:%S')} Avg = {average}\n  L5 = {l5}  L10 = {l10}  L15 = {l15}  L20 = {l20}\n")
+                            print(f" Am2 {counted_bag} F_T {fillTime} Time {kattadbtime.strftime('%H:%M:%S')} Avg = {average}\n  L5 = {l5}  L10 = {l10}  L15 = {l15}  L20 = {l20}\n")
                             #elif newCount>1:
                                 #average=round(((newCount/(endTime-firstTime))*3600),2)
                                 #print(f" Am3 {counted_bag} F_T {fillTime} Time {kattadbtime.strftime('%H:%M:%S')} Avg = {average}\n  L5 = {l5}  L10 = {l10}  L15 = {l15}  L20 = {l20}\n")
                         else:
                             average=round(((counted_bag/(endTime-firstTime))*3600),2)
                             # print(f" Katta No. {counted_bag} Filling_Time {fillTime} DateTime {kattadbtime} Average = {average}")
-                            print(f" Am3 {counted_bag} F_T {fillTime} Time {kattadbtime.strftime('%H:%M:%S')} Avg = {average}\n  L5 = {l5}  L10 = {l10}  L15 = {l15}  L20 = {l20}\n")
+                            print(f" Am2 {counted_bag} F_T {fillTime} Time {kattadbtime.strftime('%H:%M:%S')} Avg = {average}\n  L5 = {l5}  L10 = {l10}  L15 = {l15}  L20 = {l20}\n")
 # Comment Below 3 line if Don't want to save to Database
-                        val = (counted_bag, fillTime, kattadbtime, average)
-                        curA.execute(sql, val)
-                        mydb.commit()
-
+                        # val = (counted_bag, fillTime, kattadbtime, average)
+                        # curA.execute(sql, val)
+                        # mydb.commit()
+                        
+                        device_data = get_device_data(DEVICE_ID)
+                        katta_time = kattadbtime.isoformat()
+                        katta_weight = 50  # Replace this with the actual value
+                        circle = device_data.get('circle')
+                        feed_time = device_data.get('feed_time')
+                        circle_hold = device_data.get('circle_hold')
+                        # galla_clear_time = device_data.get('galla_clear_time')
+                        actual_hold = device_data.get('actual_hold')
+                        feedstatus = GPIO.input(hopper_Vibrator_ON)
+                        if feedstatus:
+                            feed_status = True
+                        else:
+                            feed_status - False
+                        # if GPIO.input(overload)==1:
+                        #     overload_status = False
+                        # else:
+                        #     overload_status = True
+                        overload_status = False
+                        response = send_milldata(katta_time, katta_weight, circle, feed_time, circle_hold, actual_hold, feed_status, overload_status)
+                        print(f"Sent data to device {DEVICE_ID}: {response.status_code}")
+                        
                         que_out1.put(counted_bag)
                         #que_out2.append(average)
                         #que_5K.put(3600/(sum(list_of_n_Katta)/len(list_of_n_Katta)))
@@ -331,69 +354,12 @@ def katta_counter():
             pass
 # --------------------------------------- Katta Counter Function ----- END---------------------------------------
 
-#----------------------------------------Get Feeding values from server ----- START--------------------------------
-
-# API_URL = "http://localhost:8000/milldata/device/"
-# USERNAME = "testuser1"
-# PASSWORD = "Test4work"
-# DEVICE_ID = "1"
-
-# def fetch_device_data(device_id):
-#     url = f"{API_URL}{device_id}/"
-#     response = requests.get(url, auth=(USERNAME, PASSWORD))
-#     print(f"Response status code: {response.status_code}")
-#     print(f"Response text: {response.text}")
-
-#     if response.status_code == 200 and response.text:
-#         try:
-#             data = json.loads(response.text)
-#             return data
-#         except json.JSONDecodeError:
-#             print("Error parsing JSON response.")
-#             return None
-#     else:
-#         print(f"Error fetching device data: {response.status_code}")
-#         return None
-
-# def main():
-# device_data = fetch_device_data(DEVICE_ID)
-# if device_data:
-#     # print(f"Device data: {device_data}")
-    
-#     name = device_data.get('name')
-#     ip_address = device_data.get('ip_address')
-#     mac_address = device_data.get('mac_address')
-#     status = device_data.get('status')
-#     initial_hold = device_data.get('initial_hold')
-#     circle = device_data.get('circle')
-#     feed_time = device_data.get('feed_time')
-#     circle_hold = device_data.get('circle_hold')
-#     galla_clear_time = device_data.get('galla_clear_time')
-#     actual_hold = device_data.get('actual_hold')
-#     overload_hold = device_data.get('overload_hold')
-
-#     print(f"Name: {name}")
-#     print(f"IP Address: {ip_address}")
-#     print(f"MAC Address: {mac_address}")
-#     print(f"Status: {status}")
-#     print(f"Initial Hold: {initial_hold}")
-#     print(f"Circle: {circle}")
-#     print(f"Feed Time: {feed_time}")
-#     print(f"Circle Hold: {circle_hold}")
-#     print(f"Galla Clear Time: {galla_clear_time}")
-#     print(f"Actual Hold: {actual_hold}")
-#     print(f"Overload Hold: {overload_hold}")
-
-# else:
-#     print("No device data retrieved.")
-
-
 
 # --------------------------------------- Feeding Function ----- START---------------------------------------
 # Auto timer function to control Vibrator & Conveyar
-def feeding():#que1
+def feeding(que1):
     print(" Feeding Function Actived.\n Waiting for 1st Katta...")
-    # katta_number = que1.get()
+    katta_number = que1.get()
     print(" 1st Katta Received.\nFeeding Process Started.\n10 Second Wait...")
     try:
         # counter
@@ -418,7 +384,7 @@ def feeding():#que1
             circle_hold = device_data.get('circle_hold')
             galla_clear_time = device_data.get('galla_clear_time')
             actual_hold = device_data.get('actual_hold')
-            overload_hold = device_data.get('overload_hold')
+            # overload_hold = device_data.get('overload_hold')
             for i in range(circle):
                 # if GPIO.input(overload) == 1:
                 # GPIO.output(hopper_Vibrator_ON,GPIO.LOW)
@@ -467,11 +433,11 @@ def exit_test():
 
 if __name__ == '__main__':
     try:
-        # if que_out1:
-        #    a=que_out1
-        # Thread(target = katta_counter).start()
-        # Thread(target = feeding, args=(a,), daemon =True).start()
-        Thread(target = feeding).start()
+        if que_out1:
+            a=que_out1
+        Thread(target = katta_counter).start()
+        Thread(target = feeding, args=(a,), daemon =True).start()
+        # Thread(target = feeding).start()
         Thread(target = exit_test).start()
     except KeyboardInterrupt:
         GPIO.cleanup()

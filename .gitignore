@@ -1,6 +1,8 @@
-# .env
-# __pycache__/
-# db.sqlite3
+.venv
+__pycache__/
+db.sqlite3
 localScript.py
 localScriptnew.py
-send_milldata.py
+3localscript.py
+.env
+ballmillautomation/settings.py

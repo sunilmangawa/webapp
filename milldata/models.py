@@ -39,8 +39,8 @@ class Device(models.Model):
     galla_clear_time = models.IntegerField(default=20)
     actual_hold = models.IntegerField(default=900)
     overload_hold = models.IntegerField(default=2100)
-    # galla_vibrator_status = models.BooleanField(default=True)
-    # hopper_vibrator_status = models.BooleanField(default=True)
+    galla_vibrator_status = models.BooleanField(default=True)
+    hopper_vibrator_status = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -49,15 +49,16 @@ class Milldata(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     katta_time = models.DateTimeField( )
     katta_weight = models.FloatField(null=True, blank=True)
-    # initial_hold = models.IntegerField()
+    initial_hold = models.IntegerField()
     circle = models.IntegerField() # circle mean loop
     feed_time = models.IntegerField()
     circle_hold = models.IntegerField()
-    # galla_clear_time = models.IntegerField()
+    galla_clear_time = models.IntegerField()
     actual_hold = models.IntegerField()
+    overload_hold = models.IntegerField()
     feed_status = models.BooleanField(default=True)
     overload_status = models.BooleanField(default=False)
-
+    
 
     def __str__(self):
         return f"{self.device.name}"

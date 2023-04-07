@@ -1,7 +1,7 @@
 import requests
 import json
 
-API_URL = "http://localhost:8000/milldata/device/"
+API_URL = "http://ballmillautomation.com/milldata/device/"
 USERNAME = "testuser1"
 PASSWORD = "Test4work"
 DEVICE_ID = "1"

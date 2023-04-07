@@ -28,6 +28,21 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 import xlsxwriter
 from datetime import datetime
+from django.core.paginator import Paginator
+import pandas as pd
+from datetime import datetime
+from fpdf import FPDF
+import datetime
+from .permissions import IsSuperUserOrStaff
+
+class IsSuperUserOrStaff(permissions.BasePermission):
+    """
+    Custom permission to only allow superusers or staff members to access the create functionality.
+    """
+    def has_permission(self, request, view):
+        if request.method == "POST":
+            return request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
+        return True
 
 def home_page_view(request):
     return render(request, 'home.html')
@@ -43,7 +58,27 @@ class MilldataListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         device_id = self.kwargs['device_id']
         device = Device.objects.get(id=device_id)
-        serializer.save(device=device)
+
+        # Fetch required data from Device model
+        initial_hold = device.initial_hold
+        circle = device.circle
+        feed_time = device.feed_time
+        circle_hold = device.circle_hold
+        galla_clear_time = device.galla_clear_time
+        actual_hold = device.actual_hold
+        overload_hold = device.overload_hold
+
+        # Pass the fetched data to the serializer's save method
+        serializer.save(
+            device=device,
+            initial_hold = initial_hold,
+            circle = circle,
+            feed_time = feed_time,
+            circle_hold = circle_hold,
+            galla_clear_time = galla_clear_time,
+            actual_hold = actual_hold,
+            overload_hold = overload_hold,
+        )
 
 
 class DashboardView(generic.TemplateView):
@@ -84,10 +119,11 @@ class DashboardView(generic.TemplateView):
                         adjusted_duration += time_diff
 
                 avg_time = adjusted_duration / total_bags if total_bags > 0 else 0
-
+                avg_only = (3600/avg_time)
                 device_data['device'] = device
                 device_data['total_bags'] = total_bags
                 device_data['average_time'] = avg_time
+                device_data['average_only'] = avg_only
                 devices_data.append(device_data)
 
             company_devices_data.append({'company': company, 'devices_data': devices_data})
@@ -160,7 +196,6 @@ class EditFeedingView(LoginRequiredMixin, generic.UpdateView):
 
         # Redirect to the dashboard view with the primary key
         return HttpResponseRedirect(reverse('dashboard', args=[company_pk]))
-
 class DeviceDetailView(generic.DetailView):
     model = Device
     template_name = 'device_detail.html'
@@ -171,95 +206,113 @@ class DeviceDetailView(generic.DetailView):
 
         # Get today's date in local timezone
         today = timezone.localtime(timezone.now())
-        start_date, end_date, milldata_list, total_bags, average_time = get_device_data(self.request, device) #new
+        start_date, end_date, milldata_today, total_bags, average_time = get_device_data(self.request, device) #new
+
         # Get Milldata for today
-        milldata_today = Milldata.objects.filter(device=device, katta_time__day=today.day, katta_time__month=today.month, katta_time__year=today.year)
-        total_bags = milldata_today.count()
         machine_on_time = []
         machine_off_time = []
-        # #working
         milldata_with_avg = []
-        # adjusted_duration = 0
-        # runned_duration = 0
 
-        for i in range(total_bags):
-            current_data = milldata_today[i]
-            if i > 0:
-                time_diff = (current_data.katta_time - milldata_today[i - 1].katta_time).total_seconds()
-                if time_diff > 0:
-                    avg_per_hour = 3600 / time_diff
-                else:
-                    avg_per_hour = 0
+        # To show Total Bags Today, Average Time Today, Average Bags per Hour, Predicted Bags Today's values at Bottom of device_detail.html under Milldata Heading
+        for i in range(1, total_bags+1):
+            current_data = milldata_today[i-1]
+            reversed_index = total_bags - i + 1  # Add this line
+            if i <= 1:
+                time_diff = 120.00
+                fill_time = 120.00
             else:
-                avg_per_hour = 0
-            current_data.avg_per_hour = avg_per_hour
-            milldata_with_avg.append(current_data)
+                time_diff = (current_data.katta_time - milldata_today[i - 1].katta_time).total_seconds()
+                fill_time = round((current_data.katta_time - milldata_today[i - 2].katta_time).total_seconds(),2)
             
-            # if i > 0:
-            #     time_diff = (milldata_today[i].katta_time - milldata_today[i - 1].katta_time).total_seconds()
-            #     if time_diff >= 300:
-            #         adjusted_duration += time_diff
-            #     else:
-            #         runned_duration += time_diff
+            if time_diff > 300:
+                adjusted_time_diff = time_diff - 120
+                machine_off_time.append(adjusted_time_diff)
+                time_diff = 120
+                machine_on_time.append(time_diff)
+            else:
+                machine_on_time.append(time_diff)
 
-            # # avg_time = adjusted_duration / total_bags if total_bags > 0 else 0
-            # avg_time2ND = ((milldata_today.first().katta_time - milldata_today.last().katta_time) - runned_duration) / total_bags if total_bags > 0 else 0
-            # katta_average = (3600.00/avg_time) if avg_time > 0 else 0
-            # print(katta_average)
-            # expectedBagToday = 24*katta_average if katta_average > 0 else 0
-            # print(expectedBagToday)
+            total_time = (current_data.katta_time - milldata_today[0].katta_time).total_seconds()
+            total_adjusted_time = 0
+
+            for j in range(1, i):
+                time_diff = (milldata_today[j].katta_time - milldata_today[j - 1].katta_time).total_seconds()
+                if time_diff > 300:
+                    adjusted_time_diff = time_diff - 120
+                    total_adjusted_time += adjusted_time_diff
+
+            adjusted_total_time = total_time - total_adjusted_time
+            if adjusted_total_time > 0:
+                avg_with_bag = (i / adjusted_total_time) * 3600
+            else:
+                avg_with_bag = 0
+
+            current_data.avg_per_hour = avg_with_bag
 
 
+            current_data.fill_time = fill_time  # Add time_diff value to current_data object
+            current_data.reversed_index = reversed_index
+            #milldata_with_avg.append(current_data)
+            milldata_with_avg.insert(0, current_data)  # Insert at the beginning of the list
+        
+        # To correctly calulate  Average Time Today, Average Bags per Hour, Predicted Bags Today's values shown at Top of device_detail.html under Device Name
         for i in range(1, total_bags):
             time_diff = (milldata_today[i].katta_time - milldata_today[i - 1].katta_time).total_seconds()
-            if time_diff >= 300:
-                machine_off_time.append(time_diff)
+            if time_diff > 300:
+                adjusted_time_diff = time_diff - 120
+                machine_off_time.append(adjusted_time_diff)
+                machine_on_time.append(120)
             else:
                 machine_on_time.append(time_diff)
 
 
-
-        elapsed_time = sum(machine_on_time) + sum(machine_off_time)
-        effective_time = elapsed_time - sum(machine_off_time)
-        avg_time = effective_time / total_bags if total_bags > 0 else 0
+        #To calculate Average Time to show at top
+        avg_time = sum(machine_on_time) / total_bags if total_bags > 0 else 0
         avg_per_hour = 3600 / avg_time if avg_time > 0 else 0
-
+        
+        # Calculation ofr predicted bags
         remaining_hours = 24 - today.hour
         predicted_bags_remaining = remaining_hours * avg_per_hour
         predicted_bags_today = total_bags + predicted_bags_remaining
 
+        # Reverse order of milldata_today and get the last 30 records
+        milldata_today = milldata_today.order_by('-katta_time')
+
+        # Pagination
+        paginator = Paginator(milldata_with_avg, 30)  # Display 30 records per page
+        page = self.request.GET.get('page')
+        milldata_paged = paginator.get_page(page)
+
+        #milldata_with_avg.reverse()
+
         context['total_bags'] = total_bags
         context['average_time'] = avg_time
         context['average_per_hour'] = avg_per_hour
-        # context['avg_time2ND'] = avg_time2ND
         context['predicted_bags_today'] = predicted_bags_today
         #new context
         context['start_date'] = start_date
         context['end_date'] = end_date
-        # context['milldata_today'] = milldata_today  # change this variable name to reflect the custom date range
-        context['milldata_today'] = milldata_with_avg
+        # context['milldata_today'] = milldata_with_avg
+        context['milldata_paged'] = milldata_paged        
+
         return context
 
 
 def get_device_data(request, device):
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
 
-    if start_date and end_date:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-        milldata_list = Milldata.objects.filter(device=device, katta_time__date__range=(start_date, end_date))
+    if start_date_str and end_date_str:
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
     else:
-        today = timezone.localtime(timezone.now()).date()
+        today = datetime.date.today()
         start_date = end_date = today
-        milldata_list = Milldata.objects.filter(device=device, katta_time__date=today)
 
-    total_bags = milldata_list.count()
-
-    # Calculate average_time
+    milldata_list = Milldata.objects.filter(device=device, katta_time__date__range=(start_date, end_date)).order_by('katta_time')
+    total_bags = len(milldata_list)
     if total_bags > 1:
-        time_diffs = [(milldata_list[i].katta_time - milldata_list[i - 1].katta_time).total_seconds() for i in range(1, total_bags)]
-        average_time = sum(time_diffs) / total_bags
+        average_time = (milldata_list[total_bags - 1].katta_time - milldata_list[0].katta_time).total_seconds() / (total_bags - 1)
     else:
         average_time = 0
 
@@ -268,36 +321,26 @@ def get_device_data(request, device):
 
 def export_pdf(request, device_id):
     device = Device.objects.get(pk=device_id)
-    # start_date, end_date, milldata_list, total_bags, average_time = get_device_data(request, device)
     start_date, end_date, milldata_list, total_bags, average_time = get_device_data(request, device)
-    average_time = round(average_time,2)
+    average_time = round(average_time, 2)
+
     # Create the PDF file
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=portrait(letter))
 
     # Prepare the data for the table
-    # data = [['Bag Number', 'Fill Time', 'Average']]
-    # for index, milldata in enumerate(milldata_list):
-    #     if index > 0:
-    #         fill_time = (milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds()
-    #     else:
-    #         fill_time = 0
-    #     data.append([index + 1, fill_time, average_time])
-
-    # Prepare the data for the table
     data = [['Bag Number', 'Fill Time', 'Bag Day-Time', 'Avg Per Hour']]
     for index, milldata in enumerate(milldata_list):
         if index > 0:
-            fill_time = round((milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds(),2)
+            fill_time = round((milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds(), 2)
             if fill_time > 0:
-                avg_per_hour = round((3600 / fill_time),2)
+                avg_per_hour = round((3600 / fill_time), 2)
             else:
                 avg_per_hour = 0
         else:
             fill_time = 0
             avg_per_hour = 0
         data.append([index + 1, fill_time, milldata.katta_time, avg_per_hour])
-
 
     # Create the table
     table = Table(data)
@@ -319,12 +362,9 @@ def export_pdf(request, device_id):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename='milldata.pdf')
 
-
 def export_excel(request, device_id):
     device = Device.objects.get(pk=device_id)
-    # start_date, end_date, milldata_list, total_bags, average_time = get_device_data(request, device)
     start_date, end_date, milldata_list, total_bags, average_time = get_device_data(request, device)
-
 
     # Create the Excel file
     output = BytesIO()
@@ -337,26 +377,13 @@ def export_excel(request, device_id):
     worksheet.write(0, 1, 'Fill Time', header_format)
     worksheet.write(0, 2, 'Bag Day-Time', header_format)
     worksheet.write(0, 3, 'Avg Per Hour', header_format)
-    # # Write the data rows
-    # for index, milldata in enumerate(milldata_list):
-    #     if index > 0:
-    #         fill_time = (milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds()
-    #     else:
-    #         fill_time = 0
-    #     worksheet.write(index + 1, 0, index + 1)
-    #     worksheet.write(index + 1, 1, fill_time)
-    #     worksheet.write(index + 1, 2, average_time)
-    # # Set the column widths
-    # worksheet.set_column(0, 0, 15)
-    # worksheet.set_column(1, 1, 15)
-    # worksheet.set_column(2, 2, 15)
 
     # Write the data rows
     for index, milldata in enumerate(milldata_list):
         if index > 0:
-            fill_time = (milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds()
+            fill_time = round((milldata.katta_time - milldata_list[index - 1].katta_time).total_seconds(), 2)
             if fill_time > 0:
-                avg_per_hour = 3600 / fill_time
+                avg_per_hour = round((3600 / fill_time), 2)
             else:
                 avg_per_hour = 0
         else:
@@ -364,15 +391,14 @@ def export_excel(request, device_id):
             avg_per_hour = 0
         worksheet.write(index + 1, 0, index + 1)
         worksheet.write(index + 1, 1, fill_time)
-        worksheet.write(index + 1, 2, milldata.katta_time)
+        worksheet.write(index + 1, 2, milldata.katta_time.strftime('%Y-%m-%d %H:%M:%S'))
         worksheet.write(index + 1, 3, avg_per_hour)
 
     # Set the column widths
     worksheet.set_column(0, 0, 15)
     worksheet.set_column(1, 1, 15)
-    worksheet.set_column(2, 2, 15)
+    worksheet.set_column(2, 2, 20)
     worksheet.set_column(3, 3, 15)
-
 
     # Close the workbook and return the Excel file as a response
     workbook.close()
@@ -406,13 +432,12 @@ class DeviceDataAPI(View):
 
         return JsonResponse(data)
 
-# class CompanyListCreateAPIView(generics.ListCreateAPIView):
-#     queryset = Company.objects.all()
-#     serializer_class = CompanySerializer
-#     permission_classes = [permissions.IsAuthenticated]
+class CompanyListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [IsSuperUserOrStaff]
 
-
-# class DeviceListCreateAPIView(generics.ListCreateAPIView):
-#     queryset = Device.objects.all()
-#     serializer_class = DeviceSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+class DeviceListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    permission_classes = [IsSuperUserOrStaff]

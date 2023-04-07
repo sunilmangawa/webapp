@@ -1,189 +1,126 @@
 {% extends 'base.html' %}
-
+{% load templatetags %}
 {% load static %}
 
 {% block content %}
-  <h1>{{ object.name }}</h1>
-  <p>Total Bags Today: {{ total_bags }}</p>
-  <p>Average Time Today: {{ average_time|floatformat:2 }} seconds</p>
-  <p>Average Bags per Hour: {{ average_per_hour|floatformat:2 }}</p>
-  <p>Predicted Bags Today: {{ predicted_bags_today|floatformat:2 }}</p>
-
-  <!-- Show device details and a button to edit feeding parameters -->
-  <h2>Device Details</h2>
-  <ul>
-    <li>Status: {% if object.is_active %}Active{% else %}Inactive{% endif %}</li>
-    <li>Circle: {{ object.circle }}</li>
-    <li>Feed Time: {{ object.feed_time }}</li>
-    <li>Circle Hold: {{ object.circle_hold }}</li>
-    <li>Actual Hold: {{ object.actual_hold }}</li>
-  </ul>
-  <button class="btn btn-danger ml-2" onclick="location.href='{% url 'edit_feeding' object.pk %}'">Edit Feeding</button>
-  
-  <!-- Date range picker form and export options -->
-  <h2>Custom Date Range</h2>
-  <form method="GET" action="">
-    <label for="start_date">Start Date:</label>
-    <input type="date" name="start_date" id="start_date" value="{{ start_date }}">
-    <label for="end_date">End Date:</label>
-    <input type="date" name="end_date" id="end_date" value="{{ end_date }}">
-    <button type="submit">Filter</button>
-  </form>
-  <button class="btn btn-success" onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
-  <button class="btn btn-success" onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
+<div class="container">
+  <h1 class="my-4">{{ object.name }}</h1>
+  <div class="row">
+    <div class="col-md-6">
+      <h3>Total Bags Today</h3>
+      <p class="fs-3">{{ total_bags }}</p>
+      <h3>Average Time Today</h3>
+      <p class="fs-3">{{ average_time|floatformat:2 }} seconds</p>
+      <h3>Average Bags per Hour</h3>
+      <p class="fs-3">{{ average_per_hour|floatformat:2 }}</p>
+      <h3>Predicted Bags Today</h3>
+      <p class="fs-3">{{ predicted_bags_today|floatformat:2 }}</p>
+    </div>
+    <div class="col-md-6">
+      <!-- Show device details and a button to edit feeding parameters -->
+      <h2>Device Details</h2>
+      <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item">Status: {% if object.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</li>
+        <li class="list-group-item">Circle: {{ object.circle }}</li>
+        <li class="list-group-item">Feed Time: {{ object.feed_time }}</li>
+        <li class="list-group-item">Circle Hold: {{ object.circle_hold }}</li>
+        <li class="list-group-item">Actual Hold: {{ object.actual_hold }}</li>
+      </ul>
+      <button class="btn btn-danger mb-3" onclick="location.href='{% url 'edit_feeding' object.pk %}'">Edit Feeding</button>
+      
+      <!-- Date range picker form and export options -->
+      <h2>Custom Date Range</h2>
+      <form method="GET" action="" class="mb-3">
+        <div class="row">
+          <div class="col">
+            <label for="start_date" class="form-label">Start Date:</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+          </div>
+          <div class="col">
+            <label for="end_date" class="form-label">End Date:</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Filter</button>
+      </form>
+      <button class="btn btn-success mb-3" onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
+      <button class="btn btn-success mb-3" onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
+    </div>
+  </div>
 
   <!-- Display Milldata for the selected date range -->
   <h2>Milldata</h2>
-  <table>
+  <table class="table table-striped table-bordered">
     <thead>
       <tr>
         <th>Katta No.</th>
-        <th>Avg Per Hour</th>
-        {% comment %} <th>avg_time2ND</th> {% endcomment %}
+        <th>Average</th>
+        <th>Fill Time</th>
         <th>Katta Time</th>
         <th>Katta Weight</th>
-        <th>Circle</th>
-        <th>Feed Time</th>
-        <th>Circle Hold</th>
-        <th>Actual Hold</th>
         <th>Feed Status</th>
         <th>Overload Status</th>
       </tr>
     </thead>
     <tbody>
-      {% for milldata in milldata_today %}
+      {% for milldata in milldata_paged %}
         <tr>
-          <td>{{ forloop.counter }}</td>
+          <td>{{ forloop.counter|reverse_katta_number:milldata_paged }}</td>
           <td>{{ milldata.avg_per_hour|floatformat:2 }}</td>
-          {% comment %} <td>{{ milldata.avg_time2ND|floatformat:2 }}</td> {% endcomment %}
+          <td>{{ milldata.fill_time }} </td>
           <td>{{ milldata.katta_time }} </td>
           <td>{{ milldata.katta_weight }} </td>
-          <td>{{ milldata.circle }} </td>
-          <td>{{ milldata.feed_time }} </td>
-          <td>{{ milldata.circle_hold }} </td>
-          <td>{{ milldata.actual_hold }} </td>
           <td>{{ milldata.feed_status }} </td>
           <td>{{ milldata.overload_status }} </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
-{% endblock %}
-
-
-
-
-
-
-
-
-
-
-{% comment %} {% extends 'base.html' %}
-
-{% load static %}
-
-{% block content %}
-  <h1>{{ object.name }}</h1>
-  <p>Total Bags Today: {{ total_bags }}</p>
-  <p>Average Time Today: {{ average_time|floatformat:2 }} seconds</p>
-  <p>Average Current: {{ average_katta|floatformat:2 }} </p>
-  <p>Predited Bags Today: {{ expectedBagToday|floatformat:2 }} seconds</p>
-
-  <!-- Show device details and a button to edit feeding parameters -->
-  <h2>Device Details</h2>
-  <ul>
-    <li>Status: {% if object.is_active %}Active{% else %}Inactive{% endif %}</li>
-    <li>Circle: {{ object.circle }}</li>
-    <li>Feed Time: {{ object.feed_time }}</li>
-    <li>Circle Hold: {{ object.circle_hold }}</li>
-    <li>Actual Hold: {{ object.actual_hold }}</li>
+  
+<!-- Pagination -->
+<nav aria-label="Page navigation">
+  <ul class="pagination">
+    {% if milldata_paged.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?{% querystring request page=milldata_paged.previous_page_number %}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+          <span class="visually-hidden">Previous</span>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">
+          <span aria-hidden="true">&laquo;</span>
+          <span class="visually-hidden">Previous</span>
+        </span>
+      </li>
+    {% endif %}
+    {% for i in milldata_paged.paginator.page_range %}
+      {% if milldata_paged.number == i %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link">{{ i }}</span>
+        </li>
+      {% else %}
+        <li class="page-item">
+          <a class="page-link" href="?{% querystring request page=i %}">{{ i }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    {% if milldata_paged.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?{% querystring request page=milldata_paged.next_page_number %}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+          <span class="visually-hidden">Next</span>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">
+          <span aria-hidden="true">&raquo;</span>
+          <span class="visually-hidden">Next</span>
+        </span>
+      </li>
+    {% endif %}
   </ul>
-  <button onclick="location.href='{% url 'edit_feeding' object.pk %}'">Edit Feeding</button>
-  <button onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
-  <button onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
-  <!-- Date range picker form and export options -->
-  <h2>Custom Date Range</h2>
-  <form method="GET" action="">
-    <label for="start_date">Start Date:</label>
-    <input type="date" name="start_date" id="start_date" value="{{ start_date }}">
-    <label for="end_date">End Date:</label>
-    <input type="date" name="end_date" id="end_date" value="{{ end_date }}">
-    <button type="submit">Filter</button>
-  </form>
-  <button onclick="location.href='{% url 'export_pdf' object.pk %}'">Export as PDF</button>
-  <button onclick="location.href='{% url 'export_excel' object.pk %}'">Export as Excel</button>
-
-  <!-- Display Milldata for the selected date range -->
-  <h2>Milldata</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Katta Time</th>
-        <th>Katta Weight</th>
-        <th>Circle</th>
-        <th>Feed Time</th>
-        <th>Circle Hold</th>
-        <th>Actual Hold</th>
-        <th>Feed Status</th>
-        <th>Overload Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for milldata in milldata_list %}
-        <tr>
-          <td>{{ milldata.katta_time }} - {{ milldata.value }}</td>
-          <td>{{ milldata.katta_weight }} - {{ milldata.value }}</td>
-          <td>{{ milldata.circle }} - {{ milldata.value }}</td>
-          <td>{{ milldata.feed_time }} - {{ milldata.value }}</td>
-          <td>{{ milldata.circle_hold }} - {{ milldata.value }}</td>
-          <td>{{ milldata.actual_hold }} - {{ milldata.value }}</td>
-          <td>{{ milldata.feed_status }} - {{ milldata.value }}</td>
-          <td>{{ milldata.overload_status }} - {{ milldata.value }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-{% endblock %} {% endcomment %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{% comment %} {% extends 'base.html' %}
-
-{% block content %}
-  <h1>{{ device.name }}</h1>
-  {% if milldata %}
-    <h2>Milldata</h2>
-    <ul>
-      {% for data in milldata %}
-        <li>{{ data.timestamp }} - {{ data.value }}</li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>This device doesn't have any milldata yet.</p>
-  {% endif %}
-{% endblock %} {% endcomment %}
+</nav>
+{% endblock %}

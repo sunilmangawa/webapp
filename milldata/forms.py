@@ -16,10 +16,15 @@ class CustomUserCreationForm(UserCreationForm):
 class EditFeedingForm(forms.ModelForm):
     class Meta:
         model = Device
-        fields = ['circle', 'feed_time', 'circle_hold', 'actual_hold']
+        fields = ['initial_hold', 'circle', 'feed_time', 'circle_hold', 'galla_clear_time', 'actual_hold', 'overload_hold', 'galla_vibrator_status', 'hopper_vibrator_status']
         labels = {
+            'initial_hold': 'Initial hold',
             'circle': 'Circle',
             'feed_time': 'Feed Time',
             'circle_hold': 'Circle Hold',
+            'galla_clear_time': 'Galla Clear Time',
             'actual_hold': 'Actual Hold',
+            'overload_hold': 'Overload Hold',
+            'galla_vibrator_status': 'Galla Vibrator Status',
+            'hopper_vibrator_status': 'Hopper Vibrator Status'
         }

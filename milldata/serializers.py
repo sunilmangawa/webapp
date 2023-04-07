@@ -22,3 +22,12 @@ class MilldataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Milldata
         fields = '__all__'
+        extra_kwargs = {
+            'initial_hold': {'required': False},
+            'circle': {'required': False},
+            'feed_time': {'required': False},
+            'circle_hold': {'required': False},
+            'galla_clear_time': {'required': False},
+            'actual_hold': {'required': False},
+            'overload_hold': {'required': False},
+        }
