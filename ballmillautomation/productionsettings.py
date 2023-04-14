@@ -72,11 +72,41 @@ WSGI_APPLICATION = 'ballmillautomation.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file': '/etc/mysql/my.cnf',
+        },
+    }
+}
+
+# [client]
+# database = ballmillautoDB
+# user = coder
+# password = str(#Brahma4coder)
+# default-character-set = utf8
+# END
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ballmillautoDB',
+        'USER': 'coder',
+        'PASSWORD': '#Brahma4coder',
+        'HOST': 'localhost',
+        'PORT': '',
+        'OPTIONS': {
+            'charset': 'utf8mb4', 'init_command': "SET time_zone='+05:30';",
+        },
     }
 }
 

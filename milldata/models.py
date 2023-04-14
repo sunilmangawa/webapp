@@ -32,6 +32,7 @@ class Device(models.Model):
     ip_address = models.CharField(max_length=15, null=True, blank=True)
     mac_address = models.CharField(max_length=17, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    wait_bags =models.IntegerField(default=3, null=False, blank=True)
     initial_hold = models.IntegerField(default=600)
     circle = models.IntegerField(default=21)
     feed_time = models.IntegerField(default=6)

@@ -22,10 +22,10 @@ DEVICE_ID = "1"
 
 #Database Configuration
 mydb = mysql.connector.connect(
-  host="localhost",
-  user="coder",
-  password="w24",
-  database="avinashi"
+    host="localhost",
+    user="coder",
+    password="w24",
+    database="avinashi"
 )
 curA = mydb.cursor(dictionary=True)#buffered=True
 sql = "INSERT INTO production(katta, filltime, datetime, average) VALUES(%s, %s, %s, %s)"

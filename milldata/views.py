@@ -119,7 +119,7 @@ class DashboardView(generic.TemplateView):
                         adjusted_duration += time_diff
 
                 avg_time = adjusted_duration / total_bags if total_bags > 0 else 0
-                avg_only = (3600/avg_time)
+                avg_only = (3600/avg_time) if total_bags > 0 else 0
                 device_data['device'] = device
                 device_data['total_bags'] = total_bags
                 device_data['average_time'] = avg_time
@@ -421,6 +421,7 @@ class DeviceDataAPI(View):
             'ip_address': device.ip_address,
             'mac_address': device.mac_address,
             'status': device.status,
+            'wait_bags': device.wait_bags,
             'initial_hold': device.initial_hold,
             'circle': device.circle,
             'feed_time': device.feed_time,
@@ -428,6 +429,8 @@ class DeviceDataAPI(View):
             'galla_clear_time': device.galla_clear_time,
             'actual_hold': device.actual_hold,
             'overload_hold': device.overload_hold,
+            'galla_vibrator_status': device.galla_vibrator_status,
+            'hopper_vibrator_status': device.hopper_vibrator_status,
         }
 
         return JsonResponse(data)

@@ -20,7 +20,9 @@
       <!-- Show device details and a button to edit feeding parameters -->
       <h2>Device Details</h2>
       <ul class="list-group list-group-flush mb-3">
-        <li class="list-group-item">Status: {% if object.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</li>
+        {% comment %} <li class="list-group-item">Status: {% if object.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</li> {% endcomment %}
+        <li class="list-group-item">Status: {% if object.status == 'active' %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</li>
+
         <li class="list-group-item">Circle: {{ object.circle }}</li>
         <li class="list-group-item">Feed Time: {{ object.feed_time }}</li>
         <li class="list-group-item">Circle Hold: {{ object.circle_hold }}</li>
